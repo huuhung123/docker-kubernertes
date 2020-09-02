@@ -1,0 +1,270 @@
+<!-- DOCKER ?   
+LINK: https://docs.google.com/presentation/d/15EJh6TbtLMLvQInehuFzUrJqJ5Io5MR2NDZbSp1T_Qg/edit#slide=id.p
+
+- Docker is a tool designed to make it easier to create, deploy, and run applications by using containers. Containers allow a developer to package up an application with all of the parts it needs, such as libraries and other dependencies, and ship it all out as one package.
+  - Lịch sử triển khai ứng dụng: traditional deployment ->  virtualized deployment -> container deployment
+- Docker là 1 platform triển khai ứng dụng dưới dạng container
+- Cài đặt mọi thứ cần thiết cho dự án của bạn
+- Khi join 1 dự án cũ có công nghệ cũ thì docker giúp cài đặt các công nghệ cũ đã mà không gặp khó khăn
+- Mô hình hoạt động: client - server
+
+- Các object cơ bản:
+ + images: đóng gói các tài nguyên cần thiết cho dự án của bạn
+ + container: sinh ra khi chạy các images
+ + volume: duy trì trạng thái dữ liệu của container
+ + network: giao tiếp container với nhau
+registry: lưu giữ các image -> hub.docker.com
+
+
+// DOCKER PHỔ BIẾN
+- Lightweight
+- Portable
+- Fast
+- No hypervisor
+
+
+// DÙNG CONTAINER Ở ĐÂU ?
+- Đóng gói ứng dụng chạy được trên nhiều nền tảng khác nhau
+  + Web
+  + API
+  + TCP/IP
+- Cho phép phát hành ứng dụng theo phiên bản rõ ràng
+- Tăng tốc làm việc cả đội dự án
+  + Đồng nhất môi trường làm việc: Dev -> Staging -> Production
+  + Cấu hình sẵn giúp triển khai nhẹ nhàng
+  + Tự động hóa kiểm thử, triển khai
+- Scale up năng lực phục vụ dễ dàng
+- Tăng cường bảo mật nhờ sự cô lập ứng dụng
+- Playground
+
+
+// NÊN BIẾT
+- SỬ dụng docker-compose
+- Hạn chế user root trong Dockerfile
+- Tối ưu layer trong Dockerfile(RUN-COPY-ADD)
+- Sử dụng multi-stage build giúp image nhỏ hơn
+- Entrypoint và CMD
+
+
+// HINT
+- docker run --help, docker image --help, docker version
+
+
+// DOCKER IMAGE
+- docker run ${IMAGE_NAME} $ docker run hello-world
+- docker image history ${IMAGE_NAME} OR $ docker history ${IMAGE_NAME} 
+- docker image inspect ${IMAGE_NAME} OR $ docker inspect ${IMAGE_NAME}
+- docker image pull ${IMAGE_NAME}:${IMAGE_TAG} OR $ docker pull ${IMAGE_NAME}:${IMAGE_TAG}
+- docker build --tag apache_centos:v1 .
+- docker image push (image) -> If denied, do:  $ docker login
+- docker image search ubun3
+- docker commit U1 ubuntu-vim:verstion1
+
+- docker save --output myimage.tar ff
+- docker load -i myimage.tar
+- docker tag f newimage:version2
+
+- docker image build -t huuhung/nginx-website .(image)  : From the same directory as Dockerfile
+
+
+// DOCKERFILE
+- Parts:
+    FROM - The os used. Common is alpine, debian, ubuntu
+    ENV - Environment variables
+    RUN - Run commands/shell scripts, etc
+    EXPOSE - Ports to expose
+    CMD - Final command run when you launch a new container from image
+    WORKDIR - Sets working directory (also could use 'RUN cd /some/path')
+    COPY # Copies files from host to+ container
+    ADD download form the internet ....
+
+- EX1:
+    FROM alpine
+    CMD ["echo", "hello world"]) docker build -it IMAGE, push image lên dockerhub
+
+- EX2:
+    FROM ubuntu                         1. OS - ubuntu
+
+    RUN apt-get update                  2. Update apt repo
+    RUN apt-get install python          3. Install dependencies using apt
+
+    RUN pip install flask               4. Install Python dependencies using pip
+    RUN pip install flask-mysql        
+
+    COPY . /opt/source-code             5. Copy source code to /opt folder 
+    ENTRYPOINT FLASK_APP=/opt/source-code/app.py flask run   6. . Run the web server using "flask" command
+
+    -> docker build Dockerfile -t mmumshad/my-custom-app
+    -> docker push mmumshad/my-custom-app   -> docker registry
+
+- EX3: (ENV)
+    FROM centos
+
+    RUN yum -y install httpd
+
+    ENV HTML beginner-html-site-styled
+
+    ADD https://github.com/mdn/beginner-html-site/gh.pages.zip /var/www/html/code.zip 
+
+    RUN cd /var/www/html/ && unzip code.zip && mv /var/www/html/beginner-html-site($HTML)/* /var/www/html && echo $HTML > /var/www/html/env.html (->localhost:9090/env.html -> beginner-html-site-styled)
+
+    CMD apachect1 - DFOREGROUND
+
+
+- EX4: (WORKDIR)
+    FROM centos
+
+    RUN yum -y install httpd
+
+    ENV HTML beginner-html-site-styled
+
+    WORKDIR /var/www/html/
+
+    ADD https://github.com/mdn/$HTML/gh.pages.zip ./code.zip 
+
+    RUN && unzip code.zip && mv $HTML/* . && echo $HTML > ./env.html (->localhost:9090/env.html -> beginner-html-site-styled)
+
+    CMD apachect1 - DFOREGROUND   
+  
+    -> docker exec -it .. bash -> pwd : var/www/html, echo $HTML:   beginner-html-site-styled
+
+- EX5: (???)
+    FROM centos
+
+//  ARG user=application
+
+//  ARG httpd_package
+
+    RUN yum -y install httpd ($httpd_package)
+
+    ENV HTML beginner-html-site-styled
+
+    LABEL mainteiner=Ricardo
+    LABEL vendor=companyB
+    LABEL random=yay
+
+    ENV HTML beginner-html-site-styled
+
+    WORKDIR /var/www/html/
+
+    ADD https://github.com/mdn/$HTML/gh.pages.zip ./code.zip 
+
+    RUN && unzip code.zip && mv $HTML/* . && echo $HTML > ./env.html 
+
+    RUN useradd application && chown $user:$user /var/www/html -R
+
+    USER $user
+
+    RUN rm -rf code.zip $HTML-gh-gapages/
+
+    USER root
+
+    CMD apachect1 - DFOREGROUND
+
+    -> docker build -t apache_with_code:v9 -f Dockerfile3 --build-arg user=ricardo --build-arg httpd_ackage=httpd .
+
+
+
+// DOCKER CONTAINER
++ Runtime of an image
++ They are temporary
++ The layer is RW
++ We can create as many containers as we want from one image
+
+- docker container rename a b
+- docker run -d --name env -r "test=4321" -e "var1=overwrite-value" env (Create variables in container)
+  -> docker exec -it ... bash
+  -> env | grep test -> test=4321
+  -> env | grep var1 -> var1=overwrite-value
+
+- docker diff [containerID](kiểm tra cấu trúc file container sau những lần thay đổi)
+- docker start(stop) [containerID]
+- docker cp /mycode/myimage/test.html cent:/var/www/html/
+- docker cp test.html apache2:/usr/local/apache2/htdoc/index.html
+- docker logs ${CONTAINER_ID}
+
+- docker exec -it container1 bash -c "ping 172.17.0.2"
+- docker container exec -it mynginx bash -> ls... exit  - Access Container 
+
+- docker run -dti --name container1 centos -> tạo nhanh
+- docker run -it alpine sh(attach)           # -it: interactive mode, sh: command when running
+- docker run -d alpine                       # -d: run container in background
+- docker run -p 27017:27017 mongo            # -p: mapping host port 27017 with container port 27017
+- docker run -v $(pwd)/data:/data/db mongo   # -v: mapping folder host $(pwd)/data with container folder /data/db
+- docker run -e(--env) USER=NNVGM nnvgm/hello_user  # -e: USER=NNVGM : set env USER=NNVGM for container
+- docker run -d -p 3306:3306 --name mysql --env MYSQL_ROOT_PASSWORD=123456 mysql
+- docker container run -d -p 8080:80 -v $(pwd):/usr/share/nginx/html --name nginx-website nginx
+- docker run -it -name C2 --volumes-from C1 ubuntu:latest
+- docker run -it --name mongo -p 27017:27017 -d (-v) mongo
+
+
+// DOCKER VOLUMNE: tạo ổ đĩa, xóa ở container, ở ổ đĩa vẫn còn
+- Volumes in Docker allows you to persist data after a container dies
+  + Normal Volumes
+  + Bind Volumes
+  + Anonymous volumes
+
+- docker volume ls
+- docker volume inspect D1
+- docker volume create(rm) D1   
+- docker run -it --mount source=D1,target=/home/disk1 ubuntu:latest
+- docker volume create --opt device=/Users/huuhung/Desktop/dulieu/ --opt type=none --opt o=bind D1
+  -> docker run -it -v D1:/home/disk ubuntu:latest
+
+// DOCKER NETWORK:
+- Networks in Docker are way useful to provide network connection between containers
+  + Bridge Network
+  + Host Network
+  + None Network
+
+- docker network ls -> (default: bridge, host, none)
+- docker network inspect bridge ->"Containers":{}
+
+- Tạo 2 container B1, B2 thì mặc định bridge: có 2 container và IP, mỗi container có IP và bridge, 2 container nối cùng 1 mạng nên lk mạng dc vs nhau nhuwnng chưa lk ra bên ngoài host dc(-p 8080:80, container chạy apache2(/var/www -> httpd -> vi index.html, /usr/share/nginx/src))
+- docker network create --driver bridge network1(docker network rm network1)
+- docker network connect(disconnect) bridge B3
+- docker run -d --name c-php -h php -v /mycode/:/home/mycode/ --network www-net(tạo cầu trc) php:7.3-fpm
+
+
+// DOCKER-COMPOSE: running multi container (docker-compose.yml)
+- Multi-container tool to ease administration of:
+  + Images
+  + Containers
+  + Volumes
+  + Networks
+
+version: '3.6'
+services:
+  mongo:
+     container_name: mongo
+     image: mongo
+     ports:
+	- 27017:27017
+       (- 27018:27017)
+     volumes:
+        - ./db:/data/db   docker-compose up
+
+
+// DOCKER BEST PRACTICES:
+- One service per container
+- Build context should be small
+- Avoid unnecessary packages 
+- Less layers
+
+
+// LAYERING IN DOCKER
+
+
+// ARCHITECTURE
+
+
+// DOCKER ENGINE: Docker CLI <--> REST API <--> Docker Deamon
+
+
+  // DOCKER PID
+
+
+  // DOCKER STORAGE
+
+
+  // DOCKER SWAM <--> kubernetes
